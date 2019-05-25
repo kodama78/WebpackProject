@@ -220,7 +220,17 @@ it takes to build webpack as it only updates the files that have changed.
             - login to heroku with `heroku login -i`
             - run `heroku create` inside project
                 - this will create the heroku project, give you the url and add it to the heroku git repository
-            - now push to the heroku master branch
+            - now push to the heroku master branch `git push heroku master`
+    - *Amazon Elastic Beanstalk*
+        - Install elastic CLI
+        - `eb init`
+            - select region
+            - input aws credentials
+                - in security credentials > access keys
+            - will need to set your own `NODE_ENV` variable
+                -`eb setenv NODE_ENV=production`
+            
+            
              
         
                         
