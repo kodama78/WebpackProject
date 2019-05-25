@@ -213,10 +213,14 @@ it takes to build webpack as it only updates the files that have changed.
     - *HEROKU*
         - Make a `Procfile` - automatically executed by Heroku and tells Heroku what to run whenever we want to start
         up our server
-            - `web: node server.js` - this command tells Heroku that when we want start up our server as a **web** server
+            - `start: node server.js` - this command tells Heroku that when we want start up our server as a web server
             to run this command
             - Heroku works off git repositories (not github)
-            
+            - Heroku CLI needed
+            - login to heroku with `heroku login -i`
+            - run `heroku create` inside project
+                - this will create the heroku project, give you the url and add it to the heroku git repository
+            - now push to the heroku master branch
              
         
                         
