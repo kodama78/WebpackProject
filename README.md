@@ -126,13 +126,102 @@ it takes to build webpack as it only updates the files that have changed.
                 - We set this in the `package.json` inside the `build` script:
                     - `"build": "NODE_ENV=production npm run clean && webpack -p"`
                         - the `-p` tells webpack we want a production version
-- Services for Deployment
-    - *Surge*
+- #### Services for Deployment - Static Sites
+    - **Surge**
         - Fantastic for static sites that have no backend
             - npm install surge
         - `surge -p dist` - command that tells surge the directory you want to deploy
         - creates your site at the generated url
-    - *Github Pages*
+    - **Github Pages**
         - when you create a github repo there is a special branch named `gh-pages`.
             - this will create a specially created page at a github created URL
                 - `https://<Username>.github.io/<RepoName>`
+            - when on the `gh-pages` branch use the following command:
+                - `git subtree push --prefix dist origin gh-pages`
+                    - this command lets git know that you only want to push a certain directory to the branch and nothing else
+        - to make this easy, you can make a script in your `package.json`. For github here is the following
+            - `"deploy": "npm run build && git subtree push --prefix dist origin gh-pages"`
+    - **Amazon S3**
+        - no logic involved
+        - serves up folders/files
+        - install `-g s3-website` - automatically creates an s3 bucket and deploys our site to it
+            - create API keys, give it to `s3-website`
+                - go to aws, go to Access Keys
+        - create `.env` file
+            - make two variables
+                - `AWS_ACCESS_KEY_ID`
+                - `AWS_SECRET_ACCESS_KEY`
+                    copy and past your keys in there
+        - run command `s3-website create <name of bucket>`
+            - this creates the bucket
+        - run `s3-website deploy dist`
+            - uploads everything in the `dist` to the bucket
+        - cleanup
+            - google "how to keep access keys safe"
+            - delete the s3 bucket to make sure you're not getting charged
+- #### Services for Deployment - Dynamic Sites
+    - This is for when you have a site that is interfacing w/ a webserver, such as Node.
+        - The webserver is not only serving up your files, but could also be reaching out to a 
+        database
+        - Two ways to set this up:
+            - Two separate addresses:
+                - One address sends the built application. What the user sees at `www.app.com`
+                - Built app will send requests to a second address(think `www.api.app.com`) through the 
+                webserver for any requests
+                - this is the way how large applications tend to work
+            - Single server that serves up **all** assets:
+                - Example:
+                    - Node server serves up the built app and has the ability to hit db with requests
+                - Benefit is that it is a **monolithic** application. The setup for deployment is easier since
+                it is a single server that needs to be deployed
+                - adds a bit of compatibility setup between **webpack** and **node**
+            - **The rest of this will concentrate on the Single Server setup**
+            - Node server will behave differently depending on environment (dev vs. production)
+                - **DEV**
+                    - it will run the webpack build (kind of like using the `webpack-dev-server`) as middleware
+                        - When node/express gets the request, it'll see we are looking for `index.html` and pass it off to
+                        the webpack build
+                    - install webpack middleware `webpack-dev-middleware`
+                        - you'll need `webpack`, `webpackConfig` file, and `webpackMiddleware`
+                            - Each will require the previous one `app.use(webpackMiddleware(webpack(webpackConfig)));`
+                                - Essentially, running webpack inside of expres
+                    
+                - **PRODUCTION**
+                    - we don't want to be running webpack at all as it's resource hog
+                    - want to build our app one time
+                    - when the user hits our page, node server goes to our built assets
+                    - create a conditional in the `server.js` file that checks for prod flag
+                        - `if (process.env.NODE_ENV !== 'production') {
+                           	const webpackMiddleware = require('webpack-dev-middleware');
+                           	const webpack = require('webpack');
+                           	const webpackConfig = require('./webpack.config');
+                           	app.use(webpackMiddleware(webpack(webpackConfig)));
+                           } else {
+                           	// tells express to make everything in dist available for use
+                           	app.use(express.static('dist'));
+                           	// used specifically for compatibility with react-router and browserhistory module
+                           	app.get('*', (req, res) => {
+                           		res.sendFile(path.join(__dirname, 'dist/index.html'))
+                           	})
+                           }`
+                           - **NOTE** - it's important to note that the `process.env.NODE_ENV` flag can change
+                           depending on what deployment service you are using
+                           - Because we are accessing our files in `dist` directly. Make sure that everything is built before 
+                           releasing to public deployment
+                    - to add additional logic (like auth) you would need to add additional routes **ABOVE** the webpack build
+                        - this is due to the user of the `'*'`. This will cause express to never reach any routes underneath the '*'
+    - *HEROKU*
+        - Make a `Procfile` - automatically executed by Heroku and tells Heroku what to run whenever we want to start
+        up our server
+            - `web: node server.js` - this command tells Heroku that when we want start up our server as a **web** server
+            to run this command
+            - Heroku works off git repositories (not github)
+            
+             
+        
+                        
+                    
+    
+        
+        
+                    
